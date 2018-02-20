@@ -1,0 +1,72 @@
+version: '2'
+
+x-environment: &env
+    BG_AMQ_ADMIN_HOST: rabbitmq
+    BG_AMQ_ADMIN_USER: beer_garden
+    BG_AMQ_ADMIN_PASSWORD: password
+    BG_AMQ_HOST: rabbitmq
+    BG_AMQ_USER: beer_garden
+    BG_AMQ_PASSWORD: password
+    BG_BACKEND_HOST: bartender
+    BG_DB_HOST: mongodb
+    BG_WEB_HOST: brew-view
+
+services:
+    brew-view:
+        image: bgio/brew-view
+        networks:
+            - bg-network
+        ports:
+            - "2337:2337"
+        environment:
+            <<: *env
+        depends_on:
+            - mongodb
+            - rabbitmq
+
+    bartender:
+        image: bgio/bartender
+        networks:
+            - bg-network
+        volumes:
+            - ./plugins:/plugins
+        environment:
+            <<: *env
+            # This must be changed to support remote plugins
+            # The value must be universally resolvable
+            BG_AMQ_PUBLISH_HOST: localhost
+        depends_on:
+            - mongodb
+            - rabbitmq
+            - brew-view
+
+    mongodb:
+        image: mongo:3.6
+        networks:
+            - bg-network
+        volumes:
+            - mongo-data:/data/db
+            - mongo-config:/data/configdb
+
+    rabbitmq:
+        image: rabbitmq:3.6-management-alpine
+        networks:
+            - bg-network
+        environment:
+            - RABBITMQ_DEFAULT_USER=beer_garden
+            - RABBITMQ_DEFAULT_PASS=password
+        ports:
+            - "5672:5672"
+        volumes:
+            - rabbitmq-home:/var/lib/rabbitmq
+
+networks:
+    bg-network:
+        driver: bridge
+
+volumes:
+    plugins:
+    plugin-logs:
+    mongo-data:
+    mongo-config:
+    rabbitmq-home:

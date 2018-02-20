@@ -1,0 +1,8 @@
+{
+  "bg_host": "localhost",
+  "bg_port": 2337,
+  "ssl": false,
+  "ca_cert": null,
+  "client_cert": null,
+  "ca_verify": false
+}
